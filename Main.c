@@ -3,7 +3,7 @@
 typedef struct _directions {
 	char dir_original;
 	char dir_target;
-} directions;void ArriveIntersection(directions dir) {}void ExitIntersection(directions dir) {}
+} directions;void ArriveIntersection(directions dir) {}void CrossIntersection(directions dir) {}void ExitIntersection(directions dir) {}
 Car(directions dir) {
 	ArriveIntersection(dir);
 	CrossIntersection(dir);
