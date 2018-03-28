@@ -1,13 +1,15 @@
 /*By Travis Bates and Jonathan Cardasis*/
 
+#include <stdlib.h>
 #include <stdio.h>
+#include <pthread.h>
 
 #define NUM_CARS 8
 
 const int DELTA_LEFT = 3, DELTA_STRAIGHT = 2, DELTA_RIGHT = 1;
 const double DELTA_TICK = 0.1;
 
-double clock = 0.0;
+double intersectionClock = 0.0;
 
 typedef struct _directions {
 	char dir_original;
@@ -21,7 +23,7 @@ typedef struct _car {
 } car;
 
 void PrintTime() {
-	printf("Time %d: ", clock);
+	printf("Time %d: ", intersectionClock);
 }
 
 void PrintCar(directions *dir) {
@@ -48,7 +50,7 @@ void ExitIntersection(directions *dir) {
 	PrintOutput("exiting", dir);
 }
 
-Car(void* arg) {
+void *Car(void* arg) {
 	car *threadcar = (car*)arg;
 
 	ArriveIntersection(threadcar->dir);
@@ -57,7 +59,7 @@ Car(void* arg) {
 }
 
 void tick() {
-	clock += DELTA_TICK;
+	intersectionClock += DELTA_TICK;
 }
 
 car* GetCars() {
@@ -101,7 +103,7 @@ car* GetCars() {
 	carArray[5].dir->dir_target = 'N';
 	carArray[6].dir->dir_target = 'N';
 	carArray[7].dir->dir_target = 'N';
-	
+
 	return carArray;
 }
 
@@ -121,6 +123,4 @@ void main() {
 	/*Thread stuff goes here*/
 
 	freeCars(cars);
-
-	system("pause");
 }
