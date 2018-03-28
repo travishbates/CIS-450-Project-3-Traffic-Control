@@ -1,12 +1,14 @@
 /*By Travis Bates and Jonathan Cardasis*/
 
+#include <pthread.h>
+#include <time.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <pthread.h>
 
 #define NUM_CARS 8
 
 const int DELTA_LEFT = 3, DELTA_STRAIGHT = 2, DELTA_RIGHT = 1;
+struct timeGlobal;
 
 typedef struct _directions {
 	char dir_original;
@@ -20,43 +22,47 @@ typedef struct _car {
 } car;
 
 void PrintTime() {
-	printf("Time %d: ", intersectionClock);
+	/*TODO: IMPLEMENT TIMER... USE GLOBAL TIMER SET IN MAIN TO DETERMINE CURRENT TIME*/
+	/*PROFESSOR OKAY'ED ROUNDING TIME TO NEAREST TENTH OF SECOND TO MATCH PROGRAM OUTPUT*/
+	/*MIGHT SEE SLIGHT TIME DELAY IF NOT ROUNDING TO NEAREST TENTH.*/
+	printf("Time %ld: ", timeGlobal);
 }
 
-void PrintCar(directions *dir) {
-	printf("Car %d (->%c ->%c) ", dir->dir_original, dir->dir_target);
+void PrintCar(car *car) {
+	printf("Car %d (->%c ->%c) ", car->cid, car->dir->dir_original, car->dir->dir_target);
 }
 
-void PrintOutput(char *str, directions *dir) {
+void PrintOutput(char *str, car *car) {
 	PrintTime();
-	PrintCar(dir);
+	PrintCar(car);
 	printf(str);
+	printf("\n");
 }
 
-void ArriveIntersection(directions *dir) {
+void ArriveIntersection(car *car) {
 	/*usleep until desired arrival time*/
 
-	PrintOutput("arriving", dir);
+	PrintOutput("arriving", car);
 
 	/*do logic here*/
 }
 
-void CrossIntersection(directions *dir) {
-	PrintOutput("crossing", dir);
+void CrossIntersection(car *car) {
+	PrintOutput("crossing", car);
 
 	/*spin while crossing*/
 }
 
-void ExitIntersection(directions *dir) {
-	PrintOutput("exiting", dir);
+void ExitIntersection(car *car) {
+	PrintOutput("exiting", car);
 }
 
 void *Car(void* arg) {
 	car *threadcar = (car*)arg;
 
-	ArriveIntersection(threadcar->dir);
-	CrossIntersection(threadcar->dir);
-	ExitIntersection(threadcar->dir);
+	ArriveIntersection(threadcar);
+	CrossIntersection(threadcar);
+	ExitIntersection(threadcar);
 }
 
 car* GetCars() {
@@ -112,6 +118,7 @@ void freeCars(car* carArray) {
 }
 
 void main() {
+	/*Setup and print initial car array*/
 	car* cars = GetCars();
 
 	printf("Initial car array:\n");
@@ -119,11 +126,25 @@ void main() {
 	for (int i = 0; i < NUM_CARS; i++)
 		printf("dir 1: %c dir 2: %c\n", cars[i].dir->dir_original, cars[i].dir->dir_target);
 
-	//Create threads
+	/*Start global timer*/
+	printf("Starting timer...\n");
+	timeGlobal = time(NULL);
+
+	/*Create and launch threads*/
+	printf("Creating threads...\n");
 	pthread_t threads[NUM_CARS];
 	for (int i = 0; i < NUM_CARS; i++) {
-
+		pthread_attr_t attr;
+		pthread_attr_init(&attr);
+		pthread_create(&threads[i], &attr, Car, &cars[i]);
 	}
 
+	/*Join all threads*/
+	for (int i = 0; i < NUM_CARS; i++)
+		pthread_join(threads[i], NULL);
+
+	/*Program is done, free all memory*/
 	freeCars(cars);
+ 
+   	return 0;
 }
