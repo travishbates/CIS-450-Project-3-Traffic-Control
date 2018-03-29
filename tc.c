@@ -33,8 +33,11 @@ void PrintCar(car *car) {
 }
 
 void PrintOutput(char *str, car *car) {
-	PrintTime();
-	PrintCar(car);
+	/*TODO: IMPLEMENT TIMER... USE GLOBAL TIMER SET IN MAIN TO DETERMINE CURRENT TIME*/
+	/*PROFESSOR OKAY'ED ROUNDING TIME TO NEAREST TENTH OF SECOND TO MATCH PROGRAM OUTPUT*/
+	/*MIGHT SEE SLIGHT TIME DELAY IF NOT ROUNDING TO NEAREST TENTH.*/
+	printf("Time %ld: ", 1);
+	printf("Car %d (->%c ->%c) ", car->cid, car->dir->dir_original, car->dir->dir_target);
 	printf(str);
 	printf("\n");
 }
