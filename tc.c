@@ -8,7 +8,6 @@
 #define NUM_CARS 8
 
 const int DELTA_LEFT = 3, DELTA_STRAIGHT = 2, DELTA_RIGHT = 1;
-struct timeGlobal;
 
 typedef struct _directions {
 	char dir_original;
@@ -21,18 +20,7 @@ typedef struct _car {
 	directions *dir;
 } car;
 
-void PrintTime() {
-	/*TODO: IMPLEMENT TIMER... USE GLOBAL TIMER SET IN MAIN TO DETERMINE CURRENT TIME*/
-	/*PROFESSOR OKAY'ED ROUNDING TIME TO NEAREST TENTH OF SECOND TO MATCH PROGRAM OUTPUT*/
-	/*MIGHT SEE SLIGHT TIME DELAY IF NOT ROUNDING TO NEAREST TENTH.*/
-	printf("Time %ld: ", timeGlobal);
-}
-
-void PrintCar(car *car) {
-	printf("Car %d (->%c ->%c) ", car->cid, car->dir->dir_original, car->dir->dir_target);
-}
-
-void PrintOutput(char *str, car *car) {
+void printCar(char *str, car *car) {
 	/*TODO: IMPLEMENT TIMER... USE GLOBAL TIMER SET IN MAIN TO DETERMINE CURRENT TIME*/
 	/*PROFESSOR OKAY'ED ROUNDING TIME TO NEAREST TENTH OF SECOND TO MATCH PROGRAM OUTPUT*/
 	/*MIGHT SEE SLIGHT TIME DELAY IF NOT ROUNDING TO NEAREST TENTH.*/
@@ -45,19 +33,19 @@ void PrintOutput(char *str, car *car) {
 void ArriveIntersection(car *car) {
 	/*usleep until desired arrival time*/
 
-	PrintOutput("arriving", car);
+	printCar("arriving", car);
 
 	/*do logic here*/
 }
 
 void CrossIntersection(car *car) {
-	PrintOutput("crossing", car);
+	printCar("crossing", car);
 
 	/*spin while crossing*/
 }
 
 void ExitIntersection(car *car) {
-	PrintOutput("exiting", car);
+	printCar("exiting", car);
 }
 
 void *Car(void* arg) {
@@ -131,7 +119,6 @@ void main() {
 
 	/*Start global timer*/
 	printf("Starting timer...\n");
-	timeGlobal = time(NULL);
 
 	/*Create and launch threads*/
 	printf("Creating threads...\n");
