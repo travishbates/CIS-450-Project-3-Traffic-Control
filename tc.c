@@ -13,13 +13,9 @@
 const int DELTA_LEFT = 3, DELTA_STRAIGHT = 2, DELTA_RIGHT = 1;
 double startTime;
 
-pthread_mutex_t lineLockN, lineLockE, lineLockS, lineLockW;
-pthread_mutex_t rightLockN, rightLockE, rightLockS, rightLockW;
-pthread_mutex_t leftLockNWClose, leftLockNEClose, leftLockSEClose, leftLockSWClose;
-pthread_mutex_t leftLockNWFar, leftLockNEFar, leftLockSEFar, leftLockSWFar;
-pthread_mutex_t centerLock;
-
-int numLeftNS, numLeftEW;
+int cid;
+pthread_mutex_t mutex, lineLock;
+pthread_cond_t c;
 
 typedef struct _directions {
 	char dir_original;
@@ -31,6 +27,56 @@ typedef struct _car {
 	double arrival_time;
 	directions *dir;
 } car;
+
+typedef struct _int_lock {
+	int numLocked;
+	pthread_mutex_t lock;
+} int_lock;
+
+int_lock *lockNN, *lockNE, *lockNS, *lockNW,
+*lockEN, *lockEE, *lockES, *lockEW,
+*lockSN, *lockSE, *lockSS, *lockSW,
+*lockWN, *lockWE, *lockWS, *lockWW;
+
+void acquireInt_Lock(int_lock *int_lock) {
+	pthread_mutex_lock(&mutex);
+
+	if (int_lock->numLocked == 0)
+		pthread_mutex_lock(&int_lock->lock);
+
+	int_lock->numLocked++;
+
+	pthread_mutex_unlock(&mutex);
+}
+
+void releaseInt_Lock(int_lock *int_lock) {
+	pthread_mutex_lock(&mutex);
+
+	int_lock->numLocked--;
+
+	if (int_lock->numLocked == 0)
+		pthread_mutex_unlock(&int_lock->lock);
+
+	pthread_mutex_unlock(&mutex);
+}
+
+void acquireLine_Lock(int id) {
+	pthread_mutex_lock(&lineLock);
+
+	if (id != cid)
+		pthread_cond_wait(&c, &lineLock);
+
+	pthread_mutex_unlock(&lineLock);
+}
+
+void releaseLine_Lock(int id) {
+	pthread_mutex_lock(&lineLock);
+
+	cid++;
+	pthread_cond_broadcast(&c);
+
+	pthread_mutex_unlock(&lineLock);
+}
 
 /*Returns time in seconds*/
 double GetTime() {
@@ -59,59 +105,6 @@ double getWait(car *car) {
 	return ((car->arrival_time) - (GetTime() - startTime));
 }
 
-void acquireStraightLocks(pthread_mutex_t *lock1, pthread_mutex_t *lock2,
-	pthread_mutex_t *lock3, pthread_mutex_t *lock4, pthread_mutex_t *lock5) {
-	pthread_mutex_lock(lock1);
-	pthread_mutex_lock(lock2);
-	pthread_mutex_lock(lock3);
-	pthread_mutex_lock(lock4);
-	pthread_mutex_lock(lock5);
-}
-
-void acquireLeftLocks() {
-	/*NOTE: INCREMENT NUMLEFTLS OR NUMLEFTRS, TAKE AS PARAMETER*/
-}
-
-void acquireLocks(char dir_original, char dir_target) {
-	pthread_mutex_t *lineLock;
-
-	/*Determine line lock*/
-	if (dir_original == 'N')
-		lineLock = &lineLockN;
-	else if (dir_original == 'E')
-		lineLock = &lineLockE;
-	else if (dir_original == 'S')
-		lineLock = &lineLockS;
-	else lineLock = &lineLockW;
-
-	/*Acquire line lock*/
-	pthread_mutex_lock(lineLock);
-
-	/*Acquire locks to cross*/
-	if (dir_original == 'N' && dir_target == 'N')
-		acquireStraightLocks(&leftLockSEClose, &leftLockSEFar, &leftLockNEClose, &leftLockNEFar, &rightLockN);
-	else if (dir_original == 'E' && dir_target == 'E')
-		acquireStraightLocks(&leftLockSWClose, &leftLockSWFar, &leftLockSEClose, &leftLockSEFar, &rightLockE);
-	else if (dir_original == 'S' && dir_target == 'S')
-		acquireStraightLocks(&leftLockNWClose, &leftLockNWFar, &leftLockSWClose, &leftLockSWFar, &rightLockS);
-	else if (dir_original == 'W' && dir_target == 'W')
-		acquireStraightLocks(&leftLockNEClose, &leftLockNEFar, &leftLockNWClose, &leftLockNWFar, &rightLockW);
-
-	else if (dir_original == 'N' && dir_target == 'E')
-		pthread_mutex_lock(&rightLockE);
-	else if (dir_original == 'E' && dir_target == 'S')
-		pthread_mutex_lock(&rightLockS);
-	else if (dir_original == 'S' && dir_target == 'W')
-		pthread_mutex_lock(&rightlockW);
-	else if (dir_original == 'W' && dir_target == 'N')
-		pthread_mutex_lock(&rightLockN);
-
-	/*TODO: WRITE LOCKS FOR LEFT TURNS*/
-
-	/*Release line lock*/
-	pthread_mutex_unlock(lineLock);
-}
-
 void ArriveIntersection(car *car) {
 	double wait = getWait(car);
 
@@ -124,12 +117,14 @@ void ArriveIntersection(car *car) {
 		usleep((int)(wait * 1e6));
 
 	printCar("arriving", car);
-
-	acquireLocks(car->dir->dir_original, car->dir->dir_target);
 }
 
 void CrossIntersection(car *car) {
+	acquireLine_Lock(car->cid);
+
 	printCar("crossing", car);
+
+	releaseLine_Lock(car->cid);
 
 	char dir_original = car->dir->dir_original;
 	char dir_target = car->dir->dir_target;
@@ -151,18 +146,8 @@ void CrossIntersection(car *car) {
 	else sleep(1);
 }
 
-void releaseLocks(char dir_original, char dir_target) {
-	/*Release locks to cross, in reverse order in which they were acquired*/
-
-	/*TODO: RELEASE LOCKS FOR STRAIGHTS*/
-	/*TODO: RELEASE LOCKS FOR RIGHTS*/
-	/*TODO: RELEASE LOCKS FOR LEFTS*/
-}
-
 void ExitIntersection(car *car) {
 	printCar("exiting", car);
-
-	releaseLocks(car->dir->dir_original, car->dir->dir_target);
 }
 
 void *Car(void* arg) {
@@ -225,31 +210,38 @@ void freeCars(car* carArray) {
 	free(carArray);
 }
 
+initLock(int_lock *lock) {
+	lock = malloc(sizeof(int_lock));
+
+	lock->numLocked = 0;
+}
+
 void main() {
+	cid = 0;
+
 	/*Init all locks being used*/
-	pthread_mutex_init(&lineLockN, NULL);
-	pthread_mutex_init(&lineLockE, NULL);
-	pthread_mutex_init(&lineLockS, NULL);
-	pthread_mutex_init(&lineLockW, NULL);
+	pthread_mutex_init(&mutex, NULL);
+	pthread_mutex_init(&lineLock, NULL);
 
-	pthread_mutex_init(&rightLockN, NULL);
-	pthread_mutex_init(&rightLockE, NULL);
-	pthread_mutex_init(&rightLockS, NULL);
-	pthread_mutex_init(&rightLockW, NULL);
+	initLock(lockNN);
+	initLock(lockNE);
+	initLock(lockNS);
+	initLock(lockNW);
 
-	pthread_mutex_init(&leftLockNWClose, NULL);
-	pthread_mutex_init(&leftLockNEClose, NULL);
-	pthread_mutex_init(&leftLockSEClose, NULL);
-	pthread_mutex_init(&leftLockSWClose, NULL);
+	initLock(lockEN);
+	initLock(lockEE);
+	initLock(lockES);
+	initLock(lockEW);
 
-	pthread_mutex_init(&leftLockNWFar, NULL);
-	pthread_mutex_init(&leftLockNEFar, NULL);
-	pthread_mutex_init(&leftLockSEFar, NULL);
-	pthread_mutex_init(&leftLockSWFar, NULL);
+	initLock(lockSN);
+	initLock(lockSE);
+	initLock(lockSS);
+	initLock(lockSW);
 
-	pthread_mutex_init(&centerLock, NULL);
-	numLeftNS = 0;
-	numLeftEW = 0;
+	initLock(lockWN);
+	initLock(lockWE);
+	initLock(lockWS);
+	initLock(lockWW);
 
 	/*Setup and print initial car array*/
 	car* cars = GetCars();
