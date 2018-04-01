@@ -93,127 +93,127 @@ void ArriveIntersection(car *car) {
 }
 
 int canCross(char dir_original, char dir_target) {
-    /*=====DIR_ORIGINAL NORTH COLLISION DETECTION=====*/
-    if (dir_original == 'N' && dir_target == 'N' //Straight
-        && lockWS == 0 && lockEN == 0 && lockSE == 0 //Left coll.
-        && lockWW == 0 && lockEE == 0 //Straight coll.
-        && lockWN == 0) //Right coll.
-            return 1;
-            
+	/*=====DIR_ORIGINAL NORTH COLLISION DETECTION=====*/
+	if (dir_original == 'N' && dir_target == 'N' //Straight
+		&& lockWS == 0 && lockEN == 0 && lockSE == 0 //Left coll.
+		&& lockWW == 0 && lockEE == 0 //Straight coll.
+		&& lockWN == 0) //Right coll.
+		return 1;
+
 	else if (dir_original == 'N' && dir_target == 'E' //Right
-	    && lockSE == 0 //Left coll.
-	    && lockEE == 0) //Straight coll.
-	        return 1;
-	        
+		&& lockSE == 0 //Left coll.
+		&& lockEE == 0) //Straight coll.
+		return 1;
+
 	else if (dir_original == 'N' && dir_target == 'W' //Left
-	    && lockEN == 0 && lockWS == 0 //Left coll.
-        && lockEE == 0 && lockWW == 0 && lockSS == 0 //Straight coll.
-        && lockSW == 0) //Right coll.
-	        return 1;
-	
+		&& lockEN == 0 && lockWS == 0 //Left coll.
+		&& lockEE == 0 && lockWW == 0 && lockSS == 0 //Straight coll.
+		&& lockSW == 0) //Right coll.
+		return 1;
+
 	/*=====DIR_ORIGINAL EAST COLLISION DETECTION=====*/
 	else if (dir_original == 'E' && dir_target == 'N' //Left
-	    && lockSE == 0 && lockNW == 0 //Left coll.
-        && lockWW == 0 && lockSS == 0 && lockNN == 0 //Straight coll.
-        && lockWN == 0) //Right coll.
-	        return 1;
-	
+		&& lockSE == 0 && lockNW == 0 //Left coll.
+		&& lockWW == 0 && lockSS == 0 && lockNN == 0 //Straight coll.
+		&& lockWN == 0) //Right coll.
+		return 1;
+
 	else if (dir_original == 'E' && dir_target == 'E' //Straight
-	    && lockNW == 0 && lockWS == 0 && lockSE == 0 //Left coll.
-        && lockNN == 0 && lockSS == 0 //Straight coll.
-        && lockNE == 0) //Right coll.
-	        return 1;
-	
+		&& lockNW == 0 && lockWS == 0 && lockSE == 0 //Left coll.
+		&& lockNN == 0 && lockSS == 0 //Straight coll.
+		&& lockNE == 0) //Right coll.
+		return 1;
+
 	else if (dir_original == 'E' && dir_target == 'S' //Right
-	    && lockWS == 0 //Left coll.
-        && lockSS == 0) //Straight coll.
-	        return 1;
-	
+		&& lockWS == 0 //Left coll.
+		&& lockSS == 0) //Straight coll.
+		return 1;
+
 	/*=====DIR_ORIGINAL SOUTH COLLISION DETECTION=====*/
 	else if (dir_original == 'S' && dir_target == 'E' //Left
-	    && lockWS == 0 && lockEN == 0 //Left coll.
-        && lockWW == 0 && lockEE == 0 && lockNN == 0 //Straight coll.
-        && lockNE == 0) //Right coll.
-	        return 1;
-	
+		&& lockWS == 0 && lockEN == 0 //Left coll.
+		&& lockWW == 0 && lockEE == 0 && lockNN == 0 //Straight coll.
+		&& lockNE == 0) //Right coll.
+		return 1;
+
 	else if (dir_original == 'S' && dir_target == 'S' //Straight
-	    && lockWS == 0 && lockEN == 0 && lockNW == 0 //Left coll.
-        && lockEE == 0 && lockWW == 0 //Straight coll.
-        && lockES == 0) //Right coll.
-	        return 1;
-	
+		&& lockWS == 0 && lockEN == 0 && lockNW == 0 //Left coll.
+		&& lockEE == 0 && lockWW == 0 //Straight coll.
+		&& lockES == 0) //Right coll.
+		return 1;
+
 	else if (dir_original == 'S' && dir_target == 'W' //Right
-    	&& lockNW == 0 //Left coll.
-        && lockWW == 0) //Straight coll.
-	        return 1;
-	
+		&& lockNW == 0 //Left coll.
+		&& lockWW == 0) //Straight coll.
+		return 1;
+
 	/*=====DIR_ORIGINAL WEST COLLISION DETECTION=====*/
 	else if (dir_original == 'W' && dir_target == 'N' //Right
-	    && lockEN == 0 //Left coll.
-        && lockNN == 0) //Straight coll.
-	        return 1;
-	
+		&& lockEN == 0 //Left coll.
+		&& lockNN == 0) //Straight coll.
+		return 1;
+
 	else if (dir_original == 'W' && dir_target == 'S' //Left
-	    && lockSE == 0 && lockNW == 0 //Left coll.
-        && lockEE == 0 && lockSS == 0 && lockNN == 0 //Straight coll.
-        && lockES == 0) //Right coll.
-	        return 1;
-	
+		&& lockSE == 0 && lockNW == 0 //Left coll.
+		&& lockEE == 0 && lockSS == 0 && lockNN == 0 //Straight coll.
+		&& lockES == 0) //Right coll.
+		return 1;
+
 	else if (dir_original == 'W' && dir_target == 'W' //Straight
-	    && lockNW == 0 && lockEN == 0 && lockSE == 0 //Left coll.
-        && lockNN == 0 && lockSS == 0 //Straight coll.
-        && lockSW == 0) //Right coll.
-	        return 1;
-	
+		&& lockNW == 0 && lockEN == 0 && lockSE == 0 //Left coll.
+		&& lockNN == 0 && lockSS == 0 //Straight coll.
+		&& lockSW == 0) //Right coll.
+		return 1;
+
 	return 0;
 }
 
 void addToLock(char dir_original, char dir_target, int numToAdd) {
-    if (dir_original == 'N' && dir_target == 'N')
-	    lockNN += numToAdd;
+	if (dir_original == 'N' && dir_target == 'N')
+		lockNN += numToAdd;
 	else if (dir_original == 'N' && dir_target == 'E')
-	    lockNE += numToAdd;
+		lockNE += numToAdd;
 	else if (dir_original == 'N' && dir_target == 'W')
-	    lockNW += numToAdd;
-	
+		lockNW += numToAdd;
+
 	else if (dir_original == 'E' && dir_target == 'N')
-	    lockEN += numToAdd;
+		lockEN += numToAdd;
 	else if (dir_original == 'E' && dir_target == 'E')
-	    lockEE += numToAdd;
+		lockEE += numToAdd;
 	else if (dir_original == 'E' && dir_target == 'S')
-	    lockES += numToAdd;
-	
+		lockES += numToAdd;
+
 	else if (dir_original == 'S' && dir_target == 'E')
-	    lockSE += numToAdd;
+		lockSE += numToAdd;
 	else if (dir_original == 'S' && dir_target == 'S')
-	    lockSS += numToAdd;
+		lockSS += numToAdd;
 	else if (dir_original == 'S' && dir_target == 'W')
-	    lockSW += numToAdd;
-	
+		lockSW += numToAdd;
+
 	else if (dir_original == 'W' && dir_target == 'N')
-	    lockWN += numToAdd;
+		lockWN += numToAdd;
 	else if (dir_original == 'W' && dir_target == 'S')
-	    lockWS += numToAdd;
+		lockWS += numToAdd;
 	else if (dir_original == 'W' && dir_target == 'W')
-	    lockWW += numToAdd;
+		lockWW += numToAdd;
 }
 
 void testAndAcquire(char dir_original, char dir_target) {
-    pthread_mutex_lock(&mutex_cross);
-    
-    /*Wait until car can cross*/
-    while (canCross(dir_original, dir_target) == 0)
-        pthread_cond_wait(&cond_cross, &mutex_cross);
-        
-    pthread_mutex_unlock(&mutex_cross);
-    
-    /*Increment appropriate lock*/
-    addToLock(dir_original, dir_target, 1);
+	pthread_mutex_lock(&mutex_cross);
+
+	/*Wait until car can cross*/
+	while (canCross(dir_original, dir_target) == 0)
+		pthread_cond_wait(&cond_cross, &mutex_cross);
+
+	pthread_mutex_unlock(&mutex_cross);
+
+	/*Increment appropriate lock*/
+	addToLock(dir_original, dir_target, 1);
 }
 
 void CrossIntersection(car *car) {
 	acquireLine_Lock(car->cid);
-	
+
 	/*Test for locks and then acquire the proper lock*/
 	testAndAcquire(car->dir->dir_original, car->dir->dir_target);
 
@@ -243,15 +243,15 @@ void CrossIntersection(car *car) {
 
 void ExitIntersection(car *car) {
 	printCar("exiting", car);
-	
+
 	char dir_original = car->dir->dir_original;
 	char dir_target = car->dir->dir_target;
-	
+
 	/*Decrement appropriate lock*/
 	addToLock(dir_original, dir_target, -1);
-	    
-    pthread_mutex_lock(&mutex_cross);
-    pthread_cond_broadcast(&cond_cross);
+
+	pthread_mutex_lock(&mutex_cross);
+	pthread_cond_broadcast(&cond_cross);
 	pthread_mutex_unlock(&mutex_cross);
 }
 
