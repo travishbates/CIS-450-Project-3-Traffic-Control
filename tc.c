@@ -14,8 +14,8 @@ const int DELTA_LEFT = 3, DELTA_STRAIGHT = 2, DELTA_RIGHT = 1;
 double startTime;
 
 int cid;
-pthread_mutex_t mutex, lineLock;
-pthread_cond_t c;
+pthread_mutex_t mutex_cross, lineLock;
+pthread_cond_t cond_line, cond_cross;
 
 typedef struct _directions {
 	char dir_original;
@@ -28,43 +28,16 @@ typedef struct _car {
 	directions *dir;
 } car;
 
-typedef struct _int_lock {
-	int numLocked;
-	pthread_mutex_t lock;
-} int_lock;
-
-int_lock *lockNN, *lockNE, *lockNS, *lockNW,
-*lockEN, *lockEE, *lockES, *lockEW,
-*lockSN, *lockSE, *lockSS, *lockSW,
-*lockWN, *lockWE, *lockWS, *lockWW;
-
-void acquireInt_Lock(int_lock *int_lock) {
-	pthread_mutex_lock(&mutex);
-
-	if (int_lock->numLocked == 0)
-		pthread_mutex_lock(&int_lock->lock);
-
-	int_lock->numLocked++;
-
-	pthread_mutex_unlock(&mutex);
-}
-
-void releaseInt_Lock(int_lock *int_lock) {
-	pthread_mutex_lock(&mutex);
-
-	int_lock->numLocked--;
-
-	if (int_lock->numLocked == 0)
-		pthread_mutex_unlock(&int_lock->lock);
-
-	pthread_mutex_unlock(&mutex);
-}
+int lockNN, lockNE, lockNS, lockNW,
+lockEN, lockEE, lockES, lockEW,
+lockSN, lockSE, lockSS, lockSW,
+lockWN, lockWE, lockWS, lockWW;
 
 void acquireLine_Lock(int id) {
 	pthread_mutex_lock(&lineLock);
 
-	if (id != cid)
-		pthread_cond_wait(&c, &lineLock);
+	while (id != cid)
+		pthread_cond_wait(&cond_line, &lineLock);
 
 	pthread_mutex_unlock(&lineLock);
 }
@@ -73,7 +46,7 @@ void releaseLine_Lock(int id) {
 	pthread_mutex_lock(&lineLock);
 
 	cid++;
-	pthread_cond_broadcast(&c);
+	pthread_cond_broadcast(&cond_line);
 
 	pthread_mutex_unlock(&lineLock);
 }
@@ -94,13 +67,13 @@ void Spin(int howlong) {
 }
 
 void printCar(char *str, car *car) {
-	printf("Time %lf: ", round((GetTime() - startTime) * 10) / 10);
+	printf("Time %.1f: ", round((GetTime() - startTime) * 10) / 10);
 	printf("Car %d (->%c ->%c) ", car->cid, car->dir->dir_original, car->dir->dir_target);
 	printf(str);
 	printf("\n");
 }
 
-/*Returns the time needed to wait, in microseconds*/
+/*Returns the time needed to wait, in seconds*/
 double getWait(car *car) {
 	return ((car->arrival_time) - (GetTime() - startTime));
 }
@@ -119,8 +92,130 @@ void ArriveIntersection(car *car) {
 	printCar("arriving", car);
 }
 
+int canCross(char dir_original, char dir_target) {
+	/*=====DIR_ORIGINAL NORTH COLLISION DETECTION=====*/
+	if (dir_original == 'N' && dir_target == 'N' //Straight
+		&& lockWS == 0 && lockEN == 0 && lockSE == 0 //Left coll.
+		&& lockWW == 0 && lockEE == 0 //Straight coll.
+		&& lockWN == 0) //Right coll.
+		return 1;
+
+	else if (dir_original == 'N' && dir_target == 'E' //Right
+		&& lockSE == 0 //Left coll.
+		&& lockEE == 0) //Straight coll.
+		return 1;
+
+	else if (dir_original == 'N' && dir_target == 'W' //Left
+		&& lockEN == 0 && lockWS == 0 //Left coll.
+		&& lockEE == 0 && lockWW == 0 && lockSS == 0 //Straight coll.
+		&& lockSW == 0) //Right coll.
+		return 1;
+
+	/*=====DIR_ORIGINAL EAST COLLISION DETECTION=====*/
+	else if (dir_original == 'E' && dir_target == 'N' //Left
+		&& lockSE == 0 && lockNW == 0 //Left coll.
+		&& lockWW == 0 && lockSS == 0 && lockNN == 0 //Straight coll.
+		&& lockWN == 0) //Right coll.
+		return 1;
+
+	else if (dir_original == 'E' && dir_target == 'E' //Straight
+		&& lockNW == 0 && lockWS == 0 && lockSE == 0 //Left coll.
+		&& lockNN == 0 && lockSS == 0 //Straight coll.
+		&& lockNE == 0) //Right coll.
+		return 1;
+
+	else if (dir_original == 'E' && dir_target == 'S' //Right
+		&& lockWS == 0 //Left coll.
+		&& lockSS == 0) //Straight coll.
+		return 1;
+
+	/*=====DIR_ORIGINAL SOUTH COLLISION DETECTION=====*/
+	else if (dir_original == 'S' && dir_target == 'E' //Left
+		&& lockWS == 0 && lockEN == 0 //Left coll.
+		&& lockWW == 0 && lockEE == 0 && lockNN == 0 //Straight coll.
+		&& lockNE == 0) //Right coll.
+		return 1;
+
+	else if (dir_original == 'S' && dir_target == 'S' //Straight
+		&& lockWS == 0 && lockEN == 0 && lockNW == 0 //Left coll.
+		&& lockEE == 0 && lockWW == 0 //Straight coll.
+		&& lockES == 0) //Right coll.
+		return 1;
+
+	else if (dir_original == 'S' && dir_target == 'W' //Right
+		&& lockNW == 0 //Left coll.
+		&& lockWW == 0) //Straight coll.
+		return 1;
+
+	/*=====DIR_ORIGINAL WEST COLLISION DETECTION=====*/
+	else if (dir_original == 'W' && dir_target == 'N' //Right
+		&& lockEN == 0 //Left coll.
+		&& lockNN == 0) //Straight coll.
+		return 1;
+
+	else if (dir_original == 'W' && dir_target == 'S' //Left
+		&& lockSE == 0 && lockNW == 0 //Left coll.
+		&& lockEE == 0 && lockSS == 0 && lockNN == 0 //Straight coll.
+		&& lockES == 0) //Right coll.
+		return 1;
+
+	else if (dir_original == 'W' && dir_target == 'W' //Straight
+		&& lockNW == 0 && lockEN == 0 && lockSE == 0 //Left coll.
+		&& lockNN == 0 && lockSS == 0 //Straight coll.
+		&& lockSW == 0) //Right coll.
+		return 1;
+
+	return 0;
+}
+
+void addToLock(char dir_original, char dir_target, int numToAdd) {
+	if (dir_original == 'N' && dir_target == 'N')
+		lockNN += numToAdd;
+	else if (dir_original == 'N' && dir_target == 'E')
+		lockNE += numToAdd;
+	else if (dir_original == 'N' && dir_target == 'W')
+		lockNW += numToAdd;
+
+	else if (dir_original == 'E' && dir_target == 'N')
+		lockEN += numToAdd;
+	else if (dir_original == 'E' && dir_target == 'E')
+		lockEE += numToAdd;
+	else if (dir_original == 'E' && dir_target == 'S')
+		lockES += numToAdd;
+
+	else if (dir_original == 'S' && dir_target == 'E')
+		lockSE += numToAdd;
+	else if (dir_original == 'S' && dir_target == 'S')
+		lockSS += numToAdd;
+	else if (dir_original == 'S' && dir_target == 'W')
+		lockSW += numToAdd;
+
+	else if (dir_original == 'W' && dir_target == 'N')
+		lockWN += numToAdd;
+	else if (dir_original == 'W' && dir_target == 'S')
+		lockWS += numToAdd;
+	else if (dir_original == 'W' && dir_target == 'W')
+		lockWW += numToAdd;
+}
+
+void testAndAcquire(char dir_original, char dir_target) {
+	pthread_mutex_lock(&mutex_cross);
+
+	/*Wait until car can cross*/
+	while (canCross(dir_original, dir_target) == 0)
+		pthread_cond_wait(&cond_cross, &mutex_cross);
+
+	pthread_mutex_unlock(&mutex_cross);
+
+	/*Increment appropriate lock*/
+	addToLock(dir_original, dir_target, 1);
+}
+
 void CrossIntersection(car *car) {
 	acquireLine_Lock(car->cid);
+
+	/*Test for locks and then acquire the proper lock*/
+	testAndAcquire(car->dir->dir_original, car->dir->dir_target);
 
 	printCar("crossing", car);
 
@@ -148,6 +243,16 @@ void CrossIntersection(car *car) {
 
 void ExitIntersection(car *car) {
 	printCar("exiting", car);
+
+	char dir_original = car->dir->dir_original;
+	char dir_target = car->dir->dir_target;
+
+	/*Decrement appropriate lock*/
+	addToLock(dir_original, dir_target, -1);
+
+	pthread_mutex_lock(&mutex_cross);
+	pthread_cond_broadcast(&cond_cross);
+	pthread_mutex_unlock(&mutex_cross);
 }
 
 void *Car(void* arg) {
@@ -210,38 +315,12 @@ void freeCars(car* carArray) {
 	free(carArray);
 }
 
-initLock(int_lock *lock) {
-	lock = malloc(sizeof(int_lock));
-
-	lock->numLocked = 0;
-}
-
 void main() {
 	cid = 0;
 
 	/*Init all locks being used*/
-	pthread_mutex_init(&mutex, NULL);
+	pthread_mutex_init(&mutex_cross, NULL);
 	pthread_mutex_init(&lineLock, NULL);
-
-	initLock(lockNN);
-	initLock(lockNE);
-	initLock(lockNS);
-	initLock(lockNW);
-
-	initLock(lockEN);
-	initLock(lockEE);
-	initLock(lockES);
-	initLock(lockEW);
-
-	initLock(lockSN);
-	initLock(lockSE);
-	initLock(lockSS);
-	initLock(lockSW);
-
-	initLock(lockWN);
-	initLock(lockWE);
-	initLock(lockWS);
-	initLock(lockWW);
 
 	/*Setup and print initial car array*/
 	car* cars = GetCars();
