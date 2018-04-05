@@ -28,10 +28,10 @@ typedef struct _car {
 	directions *dir;
 } car;
 
-int lockNN, lockNE, lockNS, lockNW,
-lockEN, lockEE, lockES, lockEW,
-lockSN, lockSE, lockSS, lockSW,
-lockWN, lockWE, lockWS, lockWW;
+int lockNN, lockNE, lockNW,
+lockEN, lockEE, lockES,
+lockSE, lockSS, lockSW,
+lockWN, lockWS, lockWW;
 
 void acquireLine_Lock(int id) {
 	pthread_mutex_lock(&lineLock);
@@ -92,6 +92,7 @@ void ArriveIntersection(car *car) {
 	printCar("arriving", car);
 }
 
+/*Determines if a traffic flow is safe to use*/
 int canCross(char dir_original, char dir_target) {
 	/*=====DIR_ORIGINAL NORTH COLLISION DETECTION=====*/
 	if (dir_original == 'N' && dir_target == 'N' //Straight
@@ -168,6 +169,7 @@ int canCross(char dir_original, char dir_target) {
 	return 0;
 }
 
+/*Increments/Decrements a traffic flow*/
 void addToLock(char dir_original, char dir_target, int numToAdd) {
 	if (dir_original == 'N' && dir_target == 'N')
 		lockNN += numToAdd;
@@ -198,6 +200,7 @@ void addToLock(char dir_original, char dir_target, int numToAdd) {
 		lockWW += numToAdd;
 }
 
+/*Function used to help a car check and safely cross the intersection*/
 void testAndAcquire(char dir_original, char dir_target) {
 	pthread_mutex_lock(&mutex_cross);
 
@@ -255,6 +258,7 @@ void ExitIntersection(car *car) {
 	pthread_mutex_unlock(&mutex_cross);
 }
 
+/*Car thread launching function to be used by all cars*/
 void *Car(void* arg) {
 	car *threadcar = (car*)arg;
 
@@ -263,6 +267,7 @@ void *Car(void* arg) {
 	ExitIntersection(threadcar);
 }
 
+/*Returns a car array equal to the assignment description list of cars*/
 car* GetCars() {
 	car *carArray = malloc(NUM_CARS * sizeof(car));
 
@@ -308,6 +313,7 @@ car* GetCars() {
 	return carArray;
 }
 
+/*Frees the car array memory*/
 void freeCars(car* carArray) {
 	for (int i = 0; i < NUM_CARS; i++)
 		free(carArray[i].dir);
